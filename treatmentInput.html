@@ -46,7 +46,7 @@ text {
     <div class="container">
      <!-- <form action="/treatment/do/clamAV/singlescan" method="post"> -->
       <form name="submitForm" method="post" onsubmit=onsubmitFunc();>
-        <input type="button" id="btnAdd" value='check console' onclick="onsubmitFunc()">
+        <!-- <input type="button" id="btnAdd" value='check console' onclick="onsubmitFunc()"> -->
     <nav>
       <h1>Choose the files you want to run</h1>
       <!-- <div>
@@ -65,8 +65,9 @@ text {
 
            <option>Please select files</option>
          </select>
-          <ul class="options" id="chosenFiles"></ul>
-        <br/>
+          <ul class="options" id="chosenFiles">
+
+          </ul>
         </div>
 
     </nav>
@@ -303,27 +304,21 @@ var checktreatment;
       var text = document.createTextNode(option.firstChild.data);
 
 
-      //document.getElementsByTagName('input').innerHTML=option.options[choices].text;
-// console.log(textvalue);
+
       input.type = 'hidden';
       input.name = 'scanFile';
-      //input.class='scanFileListItem';
-//input.setAttribute("value",text);
-      li.appendChild(input);
+
       li.appendChild(text);
       li.setAttribute("name","scanFile");
 
       li.setAttribute('onclick', 'this.parentNode.removeChild(this);');
-//li.setAttribute("value",'input.value;')
       ul.appendChild(li);
 
       var i=0;
-      // $("input[name = 'scanFile']").each(function(){
       $("li[name = 'scanFile']").each(function(){
           i++;
           var newID='scanFile'+i;
           $(this).attr('id',newID);
-          //$(this).attr('value',text);
 
 
       });
@@ -372,7 +367,7 @@ function onsubmitFunc() {
       <script type="text/javascript">
 
       function scanFileFunc() {
-        document.getElementById("scanFile").value = document.getElementById("scanFile1").textContent;
+        document.getElementById("scanFile").value = document.getElementById("scanFile1").innerHTML;
         // document.getElementById("scanFile").value = all ;
           console.log('scanFile:' + document.getElementById("scanFile").value);
     }
