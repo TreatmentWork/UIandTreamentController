@@ -84,3 +84,36 @@ circle.parent:hover {
 
 svg {height: 800px;
 float: right;}
+
+.selected {
+  display: inline-block;
+}
+
+.selectedTreatment {
+  float: left;
+}
+
+.selectedVersion {
+  float: right;
+  margin-top: 6px;
+  margin-left: 4px;
+}
+
+.submit-btn {
+  margin-left: 17px;
+}
+
+.selectedInfo {
+    margin-left: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border: solid 1px #000033;
+display: table-cell;
+background-color: rgba(215, 233, 255, 0.5);
+color: #46a;
+}
+
+#selectedTreatment {
+  font-weight: bold;
+
+}
