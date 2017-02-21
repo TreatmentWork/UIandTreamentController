@@ -1,3 +1,11 @@
 {
-    "treatmentCatalogueXMLFile" : "./data/TreatmentCatalogue.xml"
+    "treatmentCatalogueXMLFile" : "./data/TreatmentCatalogue.xml",
+    "treatmentVMs": [
+      {
+        "name": "ClamAV",
+        "version": "1.2"
+      }
+    ],
+    "logDir" : "logs",
+    "logFileName" : "TController.log"
 }

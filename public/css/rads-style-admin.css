@@ -22,7 +22,7 @@ footer {
     text-align: center;
     clear:right;
 }
-
+/*
 nav {
     float: left;
     max-width: 40%;
@@ -44,10 +44,11 @@ nav ul {
 
 nav ul a {
     text-decoration: none;
-}
+}*/
 
 article {
     margin-left: 10%;
+    margin-right: 10%;
     padding: 1em;
     overflow: hidden;
     height: 100%;
