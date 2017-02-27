@@ -6,7 +6,7 @@
 
 </style>
 <head>
-
+  <meta http-equiv="refresh" content="30"/>
   <link rel="stylesheet" href="css/rads-style-admin.css">
   <script type="text/JavaScript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
   <!-- <script type="text/javascript" src="test.json"></script> -->
@@ -168,9 +168,9 @@
       $('#showData tr').each(function() {
         var findid = $(this).find("td:nth-child(3)").text();
         var getid = findid.substring(0,13);
-        if(getid === "TreatmentCont")
+        if($.isNumeric(getid) == false);
         // $(this).remove();
-        console.log("");
+        // console.log("");
         else
         $(this).find("td:first").text(getid);
         //  $('#showHistoricalData tr td:first').text(getid);
@@ -187,19 +187,25 @@
         seen[txt] = true;
       });
       $('#showData tr td:contains("Result")').parents("tr").remove();
+      $('#showData tr td:contains("VM creation")').parents("tr").remove();
 
       $('#showData tr').each(function() {
         var findmessage = $(this).find("td:nth-child(3)").text();
         var deleteid = findmessage.slice(15);
         $(this).find("td:nth-child(3)").text(deleteid);
       });
+
+      $('#showData tr').each(function() {
+        var findmessage = $(this).find("td:nth-child(3)").text();
+        if (findmessage.indexOf("Deletion of VM") >= 0 || findmessage.indexOf("deletion done") >= 0){
+          $(this).remove();
+        }
+      });
+
     };
 
     function CreateTableFromJSONhistorical() {
-      try{
         logHistory = myList;
-
-        //  console.log(logHistory);
 
         var col = [];
         for (var i = 0; i < logHistory.length; i++) {
@@ -238,16 +244,31 @@
 
         $('#showHistoricalData tr').each(function() {
           var findid = $(this).find("td:nth-child(3)").text();
+          if (findid.indexOf("Deletion") >= 0 || findid.indexOf("deletion") >= 0
+                || findid.indexOf("Delete") >= 0 || findid.indexOf("delete") >= 0
+                  ||findid.indexOf("====") >= 0 ||findid.indexOf("Clone Management") >= 0 )
+          $(this).remove();
+
+        });
+
+        $('#showHistoricalData tr').each(function() {
+          var findid = $(this).find("td:nth-child(3)").text();
           var getid = findid.substring(0,13);
-          if(getid === "TreatmentCont")
+          if($.isNumeric(getid) == false);
+
+          // if(getid === "TreatmentCont" || getid === "VM creation s")
           // $(this).remove();
-          console.log("");
+          // console.log("");
+
           else
           $(this).find("td:first").text(getid);
 
         });
+
+
         var seen = {};
         $('#showHistoricalData tr').each(function() {
+
           var txt = $(this).find("td:first").text();
 
           if (seen[txt])
@@ -255,22 +276,27 @@
           else
           seen[txt] = true;
         });
-        // var check = $('#showHistoricalData tr td');
-        // console.log(check);
-        $('#showHistoricalData tr td:nth-child(3):not(:contains("Result"))').parents("tr").remove();
 
+        $('#showHistoricalData tr td:nth-child(3):not(:contains("Result"))').parents("tr").remove();
 
         $('#showHistoricalData tr').each(function() {
           var findmessage = $(this).find("td:nth-child(3)").text();
-          var deleteid = findmessage.slice(13);
-          var results = deleteid.substr(deleteid.indexOf("Good") + 0);
-          var results1 = results.replace(/\"},{"msg":"/g,'. ');
-          var results2 = results1.replace(/\"}]/g,'.');
-          var results3 = results2.replace(/\,/g,', ');
-          $(this).find("td:nth-child(3)").text(results3);
+          var deleteid = findmessage.slice(15);
+
+          if (deleteid.indexOf("Good") >= 0){
+            var results = deleteid.substr(deleteid.indexOf("Good") + 0);
+            var results1 = results.replace(/\"},{"msg":"/g,'. ');
+            var results2 = results1.replace(/\"}]/g,'.');
+            var resultsfinal = results2.replace(/\,/g,', ');
+          }else{
+            var results = deleteid.replace(/\"}/g,'.');
+            var resultsfinal = results.replace(/\:{"msg":"/g,' ');
+          }
+          $(this).find("td:nth-child(3)").text(resultsfinal);
 
         });
-      }catch(e) {};
+
+
     };
 
     function CreateTableFromJSONfulllogs() {
@@ -314,33 +340,31 @@
         var findid = $(this).find("td:nth-child(3)").text();
         var getid = findid.substring(0,13);
         if(getid === "TreatmentCont")
+        // if($.isNumeric(getid) == false)
+
         $(this).remove();
         //console.log("");
         else
         $(this).find("td:first").text(getid);
-        //  $('#showHistoricalData tr td:first').text(getid);
-        // console.log(findid);
-        // });
       });
       $('#showFullLogData tr').each(function() {
         var findlevel = $(this).find("td:nth-child(2)").text();
         if(findlevel === "debug")
         $(this).remove();
+        else;
         // console.log("");
-        else
-        // var findid = $(this).find("td:nth-child(3)").text();var noid = findid.slice(15);$('#showFullLogData tr td:nth-child(3)').text(noid);
-        console.log("");
       });
+      $('#showFullLogData tr td:contains("VM creation")').parents("tr").remove();
+
       $('#showFullLogData tr').each(function() {
         var findmessages = $(this).find("td:nth-child(3)").text();
         var deleteids = findmessages.slice(15);
-        //       var results = deleteid.substr(deleteid.indexOf("Good") + 0);
-        //       var results1 = results.replace(/\"},{"msg":"/g,'. ');
-        //       var results2 = results1.replace(/\"}]/g,'.');
-        //       var results3 = results2.replace(/\,/g,', ');
         $(this).find("td:nth-child(3)").text(deleteids);
         //
       });
+
+
+
     };
 
 
