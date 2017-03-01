@@ -11,13 +11,15 @@ var util = require('util');
 var async = require('async');
 var expandTilde = require('expand-tilde');
 var logger = require(appRoot + '/js/util/winstonConfig.js');
+var vmManagerCallback = require(appRoot + '/js/vmManagerCallback.js');
 var clamTAConfig = require(appRoot + '/config/clamTAConfig.json');
 // Import Azure SDK
 var msRestAzure = require('ms-rest-azure');
 var NetworkManagementClient = require('azure-arm-network');
 var ComputeManagementClient	= require('azure-arm-compute');
 
-var createVM = function (treatmentName, configData, cb) {
+var createVM = function (treatmentName, configData, requestId, scanFiles, cb) {
+  cb('Asynchrounously processing the VM creation. Once VM Creation completes the result will be sent to the Treatment Controller.')
   // Validate environment variables and command line arguments
   _validateEnvironmentVariables(configData);
   var networkClient;
@@ -46,11 +48,7 @@ var createVM = function (treatmentName, configData, cb) {
                  };
 
       msRestAzure.loginWithServicePrincipalSecret(vmDetails.clientId, vmDetails.secret, vmDetails.domain, function (err, credentials) {
-    	console.log('\n\n======================================');
-    	console.log('\nTreatments Agent - VM Clone Management');
-    	console.log('\n======================================\n');
-
-    	if (err) return console.log(err);
+    	if (err) return logger.error(err);
 
     	// Setup Azure client helps to our subscription / account
     	networkClient  = new NetworkManagementClient( credentials, vmDetails.subscriptionId);
@@ -59,7 +57,7 @@ var createVM = function (treatmentName, configData, cb) {
     	async.series([
     		function (callback) {
     		  // Create the PublicIP network element
-    		  createPublicIP(vmDetails, networkClient, function (err, result) {
+    		  createPublicIP(vmDetails, networkClient, requestId, function (err, result) {
     			if (err) {
     			  return callback(err);
     			}
@@ -69,7 +67,7 @@ var createVM = function (treatmentName, configData, cb) {
 
     		function (callback) {
     		  // Create the Network Interface(NIC) network element
-    		  createNetworkInterface(vmDetails, networkClient, function (err, result) {
+    		  createNetworkInterface(vmDetails, networkClient, requestId, function (err, result) {
     			if (err) {
     			  return callback(err);
     			}
@@ -79,7 +77,7 @@ var createVM = function (treatmentName, configData, cb) {
 
     		function (callback) {
     		  //  Create VM
-    		  cloneVM(vmDetails, computeClient, function (err, result) {
+    		  cloneVM(vmDetails, computeClient, requestId, function (err, result) {
     			if (err) {
     			  return callback(err);
     			}
@@ -102,9 +100,9 @@ var createVM = function (treatmentName, configData, cb) {
       		if (err) {
       		    console.log(util.format('\nError occurred:\n%s',
       			  util.inspect(err, { depth: null })));
-              cb(err);
+              vmManagerCallback.sendVMCreationResult(err);
       		} else {
-              cb(null, results[2], results[3], configData);
+              vmManagerCallback.sendVMCreationResult(null, results[2], results[3], configData, requestId, scanFiles);
       		}
     	   }
     	);
@@ -112,16 +110,16 @@ var createVM = function (treatmentName, configData, cb) {
 };
 
 // Helper: Create Public IP for VM
-function createPublicIP(vmDetails, networkClient, callback) {
+function createPublicIP(vmDetails, networkClient, requestId, callback) {
     var networkParameters = { "location": vmDetails.location,
   							              "publicIPAllocationMethod": "Dynamic" };
 
-    console.log('Creating Public IP: ' + vmDetails.publicIPName);
+    logger.debug(requestId + 'Creating Public IP: ' + vmDetails.publicIPName);
     return networkClient.publicIPAddresses.createOrUpdate(vmDetails.resourceGroupName, vmDetails.publicIPName, networkParameters, callback);
 }
 
 // Helper: Create Network Inteface for VM
-function createNetworkInterface(vmDetails, networkClient, callback) {
+function createNetworkInterface(vmDetails, networkClient, requestId, callback) {
   var networkParameters = 	{ "location": vmDetails.location,
 								"ipConfigurations": [{
 									"publicIPAddress" : {
@@ -137,15 +135,15 @@ function createNetworkInterface(vmDetails, networkClient, callback) {
 								}
 							};
 
-    console.log('Creating Network Interface: ' + vmDetails.networkInterfaceName);
+    logger.debug(requestId + 'Creating Network Interface: ' + vmDetails.networkInterfaceName);
     return networkClient.networkInterfaces.createOrUpdate(vmDetails.resourceGroupName, vmDetails.networkInterfaceName, networkParameters, callback);
 }
 
 
 
 // Helper: Create VM from VHD Image
-function cloneVM(vmDetails, computeClient, callback) {
-  console.log('Create Clone VM: ' + vmDetails.vmName);
+function cloneVM(vmDetails, computeClient, requestId, callback) {
+  logger.debug(requestId + 'Create Clone VM: ' + vmDetails.vmName);
   var publicSSHKey = fs.readFileSync(expandTilde(vmDetails.sshPublicKeyPath), 'utf8');
   var vmParameters = 	{ 	"location": vmDetails.location,
 							"hardwareProfile": {
@@ -185,7 +183,7 @@ function cloneVM(vmDetails, computeClient, callback) {
   return computeClient.virtualMachines.createOrUpdate(vmDetails.resourceGroupName, vmDetails.vmName, vmParameters, callback);
 }
 
-var destroyVM = function (vmName, configData, cb) {
+var destroyVM = function (vmName, configData, requestId, cb) {
   // Azure Management Interface object helpers
   var networkClient;
   var computeClient;
@@ -203,11 +201,8 @@ var destroyVM = function (vmName, configData, cb) {
                  };
 
       msRestAzure.loginWithServicePrincipalSecret(vmDetails.clientId, vmDetails.secret, vmDetails.domain, function (err, credentials) {
-    	console.log('\n\n======================================');
-    	console.log('\nTreatments Agent - VM Clone Management');
-    	console.log('\n======================================\n');
 
-    	if (err) return console.log(err);
+    	if (err) return logger.error(err);
 
     	// Setup Azure client helps to our subscription / account
     	networkClient  = new NetworkManagementClient( credentials, vmDetails.subscriptionId);
@@ -216,7 +211,7 @@ var destroyVM = function (vmName, configData, cb) {
       	async.series([
       		function (callback) {
       		  // Create the PublicIP network element
-      		  deleteVM(vmDetails, computeClient, function (err, result) {
+      		  deleteVM(vmDetails, computeClient, requestId, function (err, result) {
       			if (err) {
       			  return callback(err);
       			}
@@ -226,7 +221,7 @@ var destroyVM = function (vmName, configData, cb) {
 
       		function (callback) {
       		  // Create the Network Interface(NIC) network element
-      		  deleteNetworkInterface(vmDetails, networkClient, function (err, result) {
+      		  deleteNetworkInterface(vmDetails, networkClient, requestId, function (err, result) {
       			if (err) {
       			  return callback(err);
       			}
@@ -236,7 +231,7 @@ var destroyVM = function (vmName, configData, cb) {
 
       		function (callback) {
       		  //  Create VM
-      		  deletePublicIP(vmDetails, networkClient, function (err, result) {
+      		  deletePublicIP(vmDetails, networkClient, requestId, function (err, result) {
       			if (err) {
       			  return callback(err);
       			}
@@ -262,9 +257,9 @@ var destroyVM = function (vmName, configData, cb) {
 
 
 // Helper: Create Public IP for VM
-function deleteVM(vmDetails, computeClient, callback) {
+function deleteVM(vmDetails, computeClient, requestId, callback) {
 
-  console.log('Delete Clone VM: ' + vmDetails.vmName);
+  logger.debug(requestId + 'Delete Clone VM: ' + vmDetails.vmName);
   return computeClient.virtualMachines.deleteMethod(vmDetails.resourceGroupName,
                                                              vmDetails.vmName,
                                                              "",
@@ -273,7 +268,7 @@ function deleteVM(vmDetails, computeClient, callback) {
 
 
 // Helper: Delete NIC for VM
-function deleteNetworkInterface(vmDetails, networkClient, callback) {
+function deleteNetworkInterface(vmDetails, networkClient, requestId, callback) {
 
   var networkParameters = 	{ "location": vmDetails.location,
 								"ipConfigurations": [{
@@ -288,15 +283,15 @@ function deleteNetworkInterface(vmDetails, networkClient, callback) {
 								}]
 							};
 
-    console.log('Delete Network Interface: ' + vmDetails.networkInterfaceName);
+    logger.debug(requestId + 'Delete Network Interface: ' + vmDetails.networkInterfaceName);
     return networkClient.networkInterfaces.deleteMethod(vmDetails.resourceGroupName, vmDetails.networkInterfaceName, networkParameters, callback);
 }
 
 
 // Helper: Delete Public IP for VM
-function deletePublicIP(vmDetails, networkClient, callback) {
+function deletePublicIP(vmDetails, networkClient, requestId, callback) {
     var networkParameters = 	{ "location": vmDetails.location };
-    console.log('Delete Public IP: ' + vmDetails.publicIPName);
+    logger.debug(requestId + 'Delete Public IP: ' + vmDetails.publicIPName);
     return networkClient.publicIPAddresses.deleteMethod(vmDetails.resourceGroupName, vmDetails.publicIPName, networkParameters, callback);
 }
 

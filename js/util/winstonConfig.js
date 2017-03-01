@@ -14,7 +14,6 @@ var tsFormat = function () {
 module.exports = exports = winston = new (winston.Logger)({
   transports: [
     new (winston.transports.Console)({
-      timestamp: tsFormat,
       colorize: true,
       level: 'debug'
     }),
@@ -22,33 +21,6 @@ module.exports = exports = winston = new (winston.Logger)({
       name: 'debug-file',
       filename: logDir + '/' + commonConfig.logFileName,
       level: 'debug'
-      // json:false,
-      // formatter: formatter
     })
   ]
 });
-//
-// function formatter(args) {
-//   var tsFormat = function () {
-//     (new Date()).toLocaleTimeString();
-//   };  var logMessage = '{"level":"' + args.level + '","message":"' + args.message + '","timestamp":"' + tsFormat + '"},';
-//   return logMessage;
-// }
-//
-
-
-//
-// module.exports = exports = winston = new (winston.Logger)({
-//   transports: [
-//     new (winston.transports.Console)({
-//       timestamp: tsFormat,
-//       colorize: true,
-//       level: 'debug'
-//     }),
-//     new (winston.transports.File)({
-//       name: 'debug-file',
-//       filename: logDir + '/' + commonConfig.logFileName,
-//       level: 'debug'
-//     })
-//   ]
-// });

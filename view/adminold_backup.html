@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+  <!-- <meta http-equiv="refresh" content="30"/> -->
+  <link rel="stylesheet" href="css/rads-style-admin.css">
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <title>RADS Admin</title>
+</head>
+<body onload="CreateTableFromJSONongoing();javascript:pageloadEvery(30000);">
+  <header>
+    <h1>RADS prototype</h1>
+  </header>
+  <div class="menu-bar">
+    <ul>
+      <li><a  href="treatment" >Run Treatment</a></li>
+      <li><a href="treatmentCatalogue" >View Catalogue</a></li>
+      <li><a href="admin" class="active">Submitted treatments</a></li>
+    </ul>
+  </div>
+
+  <div class="container">
+    <!-- <nav></nav> -->
+    <article>
+      <h1>Ongoing Jobs</h1>
+
+      <div id="showData" ></div>
+      <br/>
+
+      <h1>Historical Records</h1>
+      <div id="showHistoricalData"></div>
+      <br/>
+
+      <h1>Full logs</h1>
+      <div id="showFullLogData"></div>
+      <br/>
+    </article>
+
+    <script>
+    //load in treatment versions and description
+    var logInfo;
+    var logHistory;
+    function readTextFile(file, callback) {
+      var rawFile = new XMLHttpRequest();
+      rawFile.overrideMimeType("application/json");
+      rawFile.open("GET", file, true);
+      rawFile.onreadystatechange = function() {
+        if (rawFile.readyState === 4 && rawFile.status == "200") {
+          callback(rawFile.responseText);
+          allText = rawFile.responseText;
+          lines = rawFile.responseText.split("\n");
+        }
+      }
+      rawFile.send(null);
+    };
+    var myList;
+    var addBrackets;
+    var unstring;
+
+    readTextFile('TController.log', function(logtext){
+      logInfo = JSON.stringify(logtext);
+      var  s = logtext.replace(/\n/g, ",");
+
+      var newStr = s.substring(0, s.length-1);
+
+      var addBrackets = '['+newStr+']'; //{"Logs":}
+
+      myList = JSON.parse(addBrackets);
+
+      var myReversedArray = new Array();
+      $(myList).each(function (key) {
+        myReversedArray.unshift(myList[key]);
+      });
+      myList = myReversedArray;
+      $(myList).each(function (key) {
+      });
+    });
+
+    function CreateTableFromJSONongoing() {
+      // alert("hello");
+
+      logHistory = myList;
+      //
+      var logHistorylength = logHistory.length;
+      // get header values
+      var col = [];
+      for (var i = 0; i < logHistory.length; i++) {
+        for (var key in logHistory[i]) {
+          if (col.indexOf(key) === -1) {
+            col.push(key);
+          }
+        }
+      }
+      // Create table
+      var table = document.createElement("table");
+      // Create header
+      var tr = table.insertRow(-1);                   // TABLE ROW.
+      for (var i = 0; i < col.length; i++) {
+        var th = document.createElement("th");      // TABLE HEADER.
+        th.innerHTML = col[i];
+        tr.class = "sortnr";
+        tr.appendChild(th);
+      }
+      // Add data.
+      for (var i = 0; i < logHistory.length; i++) {
+        tr = table.insertRow(-1);
+        for (var j = 0; j < col.length; j++) {
+          var tabCell = tr.insertCell(-1);
+          tabCell.innerHTML = logHistory[i][col[j]];
+        }
+      }
+
+      table.id = "showDataTable";
+
+      // add table to page.
+      var divContainer = document.getElementById("showData");
+      divContainer.innerHTML = "";
+      divContainer.appendChild(table);
+
+      $('#showData').find('tr').each(function(){
+        $(this).find('th').eq(0).before('<th>JobID</th>');
+        $(this).find('td').eq(0).before('<td></td>');
+      });
+      $('#showData tr').each(function() {
+        var findid = $(this).find("td:nth-child(3)").text();
+        var getid = findid.substring(0,13);
+        if($.isNumeric(getid) == false);
+        else
+        $(this).find("td:first").text(getid);
+      });
+      var seen = {};
+      $('#showData tr').each(function() {
+        var txt = $(this).find("td:first").text();
+        if (seen[txt])
+        $(this).remove();
+        else
+        seen[txt] = true;
+      });
+    //   if ($('#showData tr td:contains("Result")') && $('#showData tr td:not(:contains("Treatment is being performed")')){
+    //       $('#showData tr td').parents("tr").remove();
+    // }
+    $('#showData tr td:contains("Result")').parents("tr").remove();
+      $('#showData tr td:contains("VM creation")').parents("tr").remove();
+      $('#showData tr').each(function() {
+        var findmessage = $(this).find("td:nth-child(3)").text();
+        var deleteid = findmessage.slice(15);
+        $(this).find("td:nth-child(3)").text(deleteid);
+      });
+      $('#showData tr').each(function() {
+        var findmessage = $(this).find("td:nth-child(3)").text();
+        if (findmessage.indexOf("Deletion of VM") >= 0 || findmessage.indexOf("deletion done") >= 0){
+          $(this).remove();
+        }
+      });
+    };
+
+    function CreateTableFromJSONhistorical() {
+      logHistory = myList;
+
+      var col = [];
+      for (var i = 0; i < logHistory.length; i++) {
+        for (var key in logHistory[i]) {
+          if (col.indexOf(key) === -1) {
+            col.push(key);
+          }
+        }
+      }
+      // CREATE DYNAMIC TABLE.
+      var table = document.createElement("table");
+      // CREATE HTML TABLE HEADER ROW USING THE EXTRACTED HEADERS ABOVE.
+      var tr = table.insertRow(-1);                   // TABLE ROW.
+      for (var i = 0; i < col.length; i++) {
+        var th = document.createElement("th");      // TABLE HEADER.
+        th.innerHTML = col[i];
+        tr.appendChild(th);
+      }
+      // ADD JSON DATA TO THE TABLE AS ROWS.
+      for (var i = 0; i < logHistory.length; i++) {
+        tr = table.insertRow(-1);
+        for (var j = 0; j < col.length; j++) {
+          var tabCell = tr.insertCell(-1);
+          tabCell.innerHTML = logHistory[i][col[j]];
+        }
+      }
+
+      // FINALLY ADD THE NEWLY CREATED TABLE WITH JSON DATA TO A CONTAINER.
+      var divContainer = document.getElementById("showHistoricalData");
+      divContainer.innerHTML = "";
+      divContainer.appendChild(table);
+
+      $('#showHistoricalData').find('tr').each(function(){
+        $(this).find('th').eq(0).before('<th>JobID</th>');
+        $(this).find('td').eq(0).before('<td></td>');
+      });
+      $('#showHistoricalData tr').each(function() {
+        var findid = $(this).find("td:nth-child(3)").text();
+        if (findid.indexOf("Deletion") >= 0 || findid.indexOf("deletion") >= 0
+        || findid.indexOf("Delete") >= 0 || findid.indexOf("delete") >= 0
+        ||findid.indexOf("====") >= 0 ||findid.indexOf("Clone Management") >= 0 )
+        $(this).remove();
+      });
+      $('#showHistoricalData tr').each(function() {
+        var findid = $(this).find("td:nth-child(3)").text();
+        var getid = findid.substring(0,13);
+        if($.isNumeric(getid) == false);
+        else
+        $(this).find("td:first").text(getid);
+      });
+      var seen = {};
+      $('#showHistoricalData tr').each(function() {
+        var txt = $(this).find("td:first").text();
+        if (seen[txt])
+        $(this).remove();
+        else
+        seen[txt] = true;
+      });
+      $('#showHistoricalData tr td:nth-child(3):not(:contains("Result"))').parents("tr").remove();
+      $('#showHistoricalData tr').each(function() {
+        var findmessage = $(this).find("td:nth-child(3)").text();
+        var deleteid = findmessage.slice(15);
+        if (deleteid.indexOf("Good") >= 0){
+          var results = deleteid.substr(deleteid.indexOf("Good") + 0);
+          var results1 = results.replace(/\"},{"msg":"/g,'. ');
+          var results2 = results1.replace(/\"}]/g,'.');
+          var resultsfinal = results2.replace(/\,/g,', ');
+        }else{
+          var results = deleteid.replace(/\"}/g,'.');
+          var resultsfinal = results.replace(/\:{"msg":"/g,' ');
+        }
+        $(this).find("td:nth-child(3)").text(resultsfinal);
+      });
+    };
+
+    function CreateTableFromJSONfulllogs() {
+
+      logHistory = myList;
+      var col = [];
+      for (var i = 0; i < logHistory.length; i++) {
+        for (var key in logHistory[i]) {
+          if (col.indexOf(key) === -1) {
+            col.push(key);
+          }
+        }
+      }
+      // CREATE DYNAMIC TABLE.
+      var table = document.createElement("table");
+      // CREATE HTML TABLE HEADER ROW USING THE EXTRACTED HEADERS ABOVE.
+      var tr = table.insertRow(-1);                   // TABLE ROW.
+      for (var i = 0; i < col.length; i++) {
+        var th = document.createElement("th");      // TABLE HEADER.
+        th.innerHTML = col[i];
+        tr.appendChild(th);
+      }
+      // ADD JSON DATA TO THE TABLE AS ROWS.
+      for (var i = 0; i < logHistory.length; i++) {
+        tr = table.insertRow(-1);
+        for (var j = 0; j < col.length; j++) {
+          var tabCell = tr.insertCell(-1);
+          tabCell.innerHTML = logHistory[i][col[j]];
+        }
+      }
+      // FINALLY ADD THE NEWLY CREATED TABLE WITH JSON DATA TO A CONTAINER.
+      var divContainer = document.getElementById("showFullLogData");
+      divContainer.innerHTML = "";
+      divContainer.appendChild(table);
+
+      $('#showFullLogData').find('tr').each(function(){
+        $(this).find('th').eq(0).before('<th>JobID</th>');
+        $(this).find('td').eq(0).before('<td></td>');
+      });
+      $('#showFullLogData tr').each(function() {
+        var findid = $(this).find("td:nth-child(3)").text();
+        var getid = findid.substring(0,13);
+        if(getid === "TreatmentCont")
+        $(this).remove();
+        else
+        $(this).find("td:first").text(getid);
+      });
+      $('#showFullLogData tr').each(function() {
+        var findlevel = $(this).find("td:nth-child(2)").text();
+        if(findlevel === "debug")
+        $(this).remove();
+        else;
+      });
+      $('#showFullLogData tr td:contains("VM creation")').parents("tr").remove();
+      $('#showFullLogData tr').each(function() {
+        var findmessages = $(this).find("td:nth-child(3)").text();
+        var deleteids = findmessages.slice(15);
+        $(this).find("td:nth-child(3)").text(deleteids);
+      });
+    };
+
+    function refreshpage1() {
+
+      CreateTableFromJSONongoing();
+      CreateTableFromJSONhistorical();
+      CreateTableFromJSONfulllogs();
+    }
+    window.onload = function(){
+      //time is set in milliseconds
+      setTimeout(refreshpage1, 50);
+    }
+    function pageloadEvery(t) {
+setTimeout('location.reload(true)', t);
+}
+    </script>
+  </body>
+  </html>
