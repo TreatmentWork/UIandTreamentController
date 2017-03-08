@@ -116,8 +116,15 @@ float: right;
   display:none;
   word-wrap: normal;
 }
+#showHistoricalData table tr th:nth-child(3),td:nth-child(4){
+  min-width: 90px;
+}
 #showFullLogData table tr th:nth-child(3),td:nth-child(3){
 max-width: 50%;
+word-wrap: break-word;
+}
+#showFullLogData table tr th:nth-child(1),td:nth-child(1){
+/*max-width: 10%;*/
 word-wrap: break-word;
 }
 #showFullLogData table{
