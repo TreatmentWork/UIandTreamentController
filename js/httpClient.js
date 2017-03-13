@@ -1,21 +1,18 @@
 var http = require('http');
 var bodyParser = require("body-parser");
 var commonConfig = require(appRoot + '/config/commonConfig.json');
-var pdfTAConfig = require(appRoot + '/config/pdfTAConfig.json');
 var logger = require(appRoot + '/js/util/winstonConfig.js');
 
-var  sendVMCreationResult = function  (err, vmName,  vmHost, configData, requestId, scanFiles ) {
-    var postData = {"requestId" : requestId, "vmName": vmName, "configData": configData, "vmHost" : vmHost, "scanFiles" : scanFiles};
+var  sendHttpRequest = function  (postData, endPoint, host, port ) {
     var postDataJSON = JSON.stringify(postData);
-    logger.debug('VM creation callback Result:' + postDataJSON);
     var headers = {
       'Content-Type': 'application/json',
       'Content-Length': postDataJSON.length
     };
     var options = {
-      host: commonConfig.tControllerHost,
-      port: commonConfig.tControllerPort,
-      path: commonConfig.vmCallbackEndpoint,
+      host: host,
+      port: port,
+      path: endPoint,
       method: 'POST',
       headers: headers
     };
@@ -29,25 +26,25 @@ var  sendVMCreationResult = function  (err, vmName,  vmHost, configData, request
       });
       // response end
       resHttp.on('end', function () {
-        logger.info(requestId + 'VM creation callback response:' + callbackResponse);
+        logger.info(postData.requestId + 'HTTP  response received:' + callbackResponse);
       });
       //response error
       resHttp.on('error', function (err) {
-        logger.error(requestId + 'Error:' + err);
+        logger.error(postData.requestId + 'Error:' + err);
       });
     });
 
-    reqHttp.setTimeout(parseInt(pdfTAConfig.timeout), function (err) {
-      logger.error(requestId + 'Request Set Timeout occured after ' + pdfTAConfig.timeout + ' milliseconds. Error details: ' + err);
+    reqHttp.setTimeout(parseInt(commonConfig.timeout), function (err) {
+      logger.error(postData.requestId + 'Request Set Timeout occured after ' + commonConfig.timeout + ' milliseconds. Error details: ' + err);
       reqHttp.abort();
     });
 
     // request error
     reqHttp.on('error', function (err) {
       if (err.code === "ECONNRESET") {
-        logger.error(requestId + 'Request Error Timeout occured after ' + pdfTAConfig.timeout + ' milliseconds. Error details: ' + err);
+        logger.error(postData.requestId + 'Request Error Timeout occured after ' + commonConfig.timeout + ' milliseconds. Error details: ' + err);
       } else {
-        logger.error(requestId + err);
+        logger.error(postData.requestId + err);
       }
     });
 
@@ -56,10 +53,10 @@ var  sendVMCreationResult = function  (err, vmName,  vmHost, configData, request
     reqHttp.end();
 
     // Do not wait for response. Response will be logged  for satus check
-    logger.info(requestId + 'VM creation result is sent.');
+    logger.debug(postData.requestId + ' for endpoint[' + endPoint + '] callback result is sent: ' + postDataJSON);
 
 };
 
 module.exports = {
-    sendVMCreationResult: sendVMCreationResult
+    sendHttpRequest: sendHttpRequest
 };

@@ -1,18 +1,18 @@
 var http = require('http');
 var bodyParser = require("body-parser");
-var clamTAConfig = require(appRoot + '/config/clamTAConfig.json');
+var pdfTAConfig = require(appRoot + '/config/pdfTAConfig.json');
 var logger = require(appRoot + '/js/util/winstonConfig.js');
 
-var  doSingleClamTreatment = function  (host, postData, requestId, callback) {
-    doClamTreatment(host, postData, clamTAConfig.singleScanEP, requestId, callback);
+var  doSinglepdfTreatment = function  (host, postData, requestId, callback) {
+    dopdfTreatment(host, postData, pdfTAConfig.singleScanEP, requestId, callback);
 };
 
-var  doMultipleClamTreatment = function  (host, postData, requestId, callback) {
-    doClamTreatment(host, postData, clamTAConfig.multiScanEP, requestId, callback);
+var  doMultiplepdfTreatment = function  (host, postData, requestId, callback) {
+    dopdfTreatment(host, postData, pdfTAConfig.multiScanEP, requestId, callback);
 };
 
-var  doClamTreatment = function  (host, postData, endpoint, requestId, callback) {
-    var port = clamTAConfig.port;
+var  dopdfTreatment = function  (host, postData, endpoint, requestId, callback) {
+    var port = pdfTAConfig.port;
     var method = 'POST';
 
     var headers = {};
@@ -33,7 +33,7 @@ var  doClamTreatment = function  (host, postData, endpoint, requestId, callback)
     };
 
     var result = '';
-    var timeoutPeriod = parseInt(clamTAConfig.timeout);
+    var timeoutPeriod = parseInt(pdfTAConfig.timeout);
     // request object
     var reqHttp = http.request(options, function (resHttp) {
       // response data
@@ -42,8 +42,8 @@ var  doClamTreatment = function  (host, postData, endpoint, requestId, callback)
       });
       // response end
       resHttp.on('end', function () {
-        logger.info(requestId + 'Treatment Result:' + result);
-        callback(result);
+        logger.debug(requestId + 'Treatment Result:' + result);
+        callback(null, result);
       });
       //response error
       resHttp.on('error', function (err) {
@@ -53,7 +53,7 @@ var  doClamTreatment = function  (host, postData, endpoint, requestId, callback)
     });
 
     reqHttp.setTimeout(timeoutPeriod, function (err) {
-      logger.error(requestId + 'Request Set Timeout occured after ' + clamTAConfig.timeout + ' milliseconds. Error details: ' + err);
+      logger.error(requestId + 'Request Set Timeout occured after ' + pdfTAConfig.timeout + ' milliseconds. Error details: ' + err);
       reqHttp.abort();
       callback(err);
     });
@@ -61,7 +61,7 @@ var  doClamTreatment = function  (host, postData, endpoint, requestId, callback)
     // request error
     reqHttp.on('error', function (err) {
       if (err.code === "ECONNRESET") {
-        logger.error(requestId + 'Request Error Timeout occured after ' + clamTAConfig.timeout + ' milliseconds. Error details: ' + err);
+        logger.error(requestId + 'Request Error Timeout occured after ' + pdfTAConfig.timeout + ' milliseconds. Error details: ' + err);
         callback(err);
       } else {
         logger.error(requestId + err);
@@ -76,11 +76,11 @@ var  doClamTreatment = function  (host, postData, endpoint, requestId, callback)
 
     // Do not wait for response. Response will be logged  for satus check
     //callback('Request submitted. Use Admin page to check progress of the request.');
-    logger.info(requestId + 'ClamAV treatment request sent.');
+    logger.info(requestId + 'Conversion treatment request sent.');
 
 };
 
 module.exports = {
-    doSingleClamTreatment: doSingleClamTreatment,
-    doMultipleClamTreatment: doMultipleClamTreatment
+    doSinglepdfTreatment: doSinglepdfTreatment,
+    doMultiplepdfTreatment: doMultiplepdfTreatment
 };

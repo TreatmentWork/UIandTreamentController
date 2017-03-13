@@ -29,6 +29,15 @@
 		}, {
 			"name": "/usr/treatmentAgent/TAgent/js/clamAVScan.js",
 			"path": "/usr/treatmentAgent/TAgent/js/clamAVScan.js"
+		}, {
+			"name": "/usr/treatmentAgent/TAgent/textTest.txt",
+			"path": "/usr/treatmentAgent/TAgent/textTest.txt"
+		}, {
+			"name": "/usr/treatmentAgent/TAgent/pptTest.pptx",
+			"path": "/usr/treatmentAgent/TAgent/pptTest.pptx"
+		}, {
+			"name": "/usr/treatmentAgent/TAgent/docTest.docx",
+			"path": "/usr/treatmentAgent/TAgent/docTest.docx"
 		}
 
 	]
